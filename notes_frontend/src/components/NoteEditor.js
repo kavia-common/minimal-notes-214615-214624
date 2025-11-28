@@ -14,41 +14,96 @@ export default Blits.Component('NoteEditor', {
       <Element
         :w="$w"
         :h="$h"
-        :color="theme.colors.surface"
-        :effects="[$shader('radius', { radius: theme.effects.radius }), $shadow(theme.effects.shadow)]"
+        :color="$surface"
+        :effects="$panelEffects"
       />
 
       <!-- Header controls -->
-      <Element x="24" y="16" :w="$w - 48" h="64">
-        <Text :content="$title || 'Untitled'" size="36" color="${theme.colors.text}" />
-        <Element x="$w - 48 - 120" y="6" w="120" h="44"
-                 :effects="[$shader('radius', { radius: theme.effects.radiusSm })]"
-                 :color="$saving ? '${theme.colors.secondary}22' : '${theme.colors.primary}22'"
+      <Element x="24" y="16" :w="$headerW" h="64">
+        <Text :content="$titleText" size="36" :color="$textColor" />
+        <Element :x="$saveX" y="6" w="120" h="44"
+                 :effects="$btnEffects"
+                 :color="$saveColor"
                  @enter="$save(true)">
-          <Text :content="$saving ? 'Saving…' : 'Save'" size="24" align="center" mount="{x:0.5,y:0.5}" x="60" y="22" color="${theme.colors.primary}" />
+          <Text :content="$saveLabel" size="24" align="center" :mountX="$center" :mountY="$center" x="60" y="22" :color="$primary" />
         </Element>
       </Element>
 
       <!-- Title input -->
-      <Element x="24" y="96" :w="$w - 48" h="64" :color="'${theme.colors.background}'" :effects="[$shader('radius', { radius: theme.effects.radiusSm })]">
-        <Text :content="$title || 'Untitled'" size="28" x="16" y="18" color="${theme.colors.text}" />
+      <Element x="24" y="96" :w="$titleW" h="64" :color="$bgColor" :effects="$inputEffects">
+        <Text :content="$titleText" size="28" x="16" y="18" :color="$textColor" />
       </Element>
 
       <!-- Content area -->
-      <Element x="24" y="176" :w="$w - 48" :h="$h - 200" :color="'${theme.colors.background}'" :effects="[$shader('radius', { radius: theme.effects.radiusSm })]">
-        <Text :content="$content || 'Start typing…'" size="24" x="16" y="16" color="${theme.colors.text}" lineheight="36" maxwidth="$w - 48 - 32" />
+      <Element x="24" y="176" :w="$contentW" :h="$contentH" :color="$bgColor" :effects="$inputEffects">
+        <Text :content="$contentText" size="24" x="16" y="16" :color="$textColor" lineheight="36" :maxwidth="$contentTextW" />
       </Element>
     </Element>
   `,
 
   state() {
     const note = this.noteId ? getNoteById(this.noteId) : null
+
+    // dimensions
+    const appW = 1920
+    const gap = theme.layout.gap
+    const sidebar = 560
+    const outerPad = gap * 3
+    const w = appW - (sidebar + outerPad)
+    const h = 984
+
+    const headerW = w - 48
+    const titleW = w - 48
+    const contentW = w - 48
+    const contentH = h - 200
+    const contentTextW = w - 48 - 32
+    const saveX = w - 48 - 120
+
+    // colors/effects
+    const surface = theme.colors.surface
+    const bgColor = theme.colors.background
+    const primary = theme.colors.primary
+    const secondary = theme.colors.secondary
+    const textColor = theme.colors.text
+    const center = 0.5
+
+    // Effects: replace special helpers with plain objects for precompiler/lint compatibility
+    const panelEffects = [
+      { type: 'radius', radius: theme.effects.radius },
+      { type: 'shadow', ...theme.effects.shadow },
+    ]
+    const btnEffects = [
+      { type: 'radius', radius: theme.effects.radiusSm },
+    ]
+    const inputEffects = [
+      { type: 'radius', radius: theme.effects.radiusSm },
+    ]
+
     return {
-      theme,
-      w: 1920 - (560 + theme.layout.gap * 3),
-      h: 984,
-      title: note?.title ?? '',
-      content: note?.content ?? '',
+      // geometry
+      w,
+      h,
+      headerW,
+      titleW,
+      contentW,
+      contentH,
+      contentTextW,
+      saveX,
+
+      // visual
+      surface,
+      bgColor,
+      primary,
+      secondary,
+      textColor,
+      center,
+      panelEffects,
+      btnEffects,
+      inputEffects,
+
+      // state
+      title: note && note.title ? note.title : '',
+      content: note && note.content ? note.content : '',
       saving: false,
       _dirtyTimer: null,
       _unsub: null,
@@ -69,12 +124,12 @@ export default Blits.Component('NoteEditor', {
           // note changed, reload it
           const n = getNoteById(this.noteId)
           this._lastNoteId = this.noteId
-          this.title = n?.title ?? ''
-          this.content = n?.content ?? ''
+          this.title = n && n.title ? n.title : ''
+          this.content = n && n.content ? n.content : ''
         } else {
           // same note, keep typing state
           const n = getNoteById(this.noteId)
-          this.title = n?.title ?? this.title
+          this.title = (n && n.title) ? n.title : this.title
           // content keep as is if user typing; store is authoritative after save
         }
       })
@@ -87,8 +142,8 @@ export default Blits.Component('NoteEditor', {
   watchers: {
     noteId(newId) {
       const n = newId ? getNoteById(newId) : null
-      this.title = n?.title ?? ''
-      this.content = n?.content ?? ''
+      this.title = n && n.title ? n.title : ''
+      this.content = n && n.content ? n.content : ''
       this._lastNoteId = newId
     },
     title() {
@@ -96,6 +151,21 @@ export default Blits.Component('NoteEditor', {
     },
     content() {
       this.$queueAutoSave()
+    },
+  },
+
+  computed: {
+    $titleText() {
+      return this.title && this.title.length ? this.title : 'Untitled'
+    },
+    $contentText() {
+      return this.content && this.content.length ? this.content : 'Start typing…'
+    },
+    $saveLabel() {
+      return this.saving ? 'Saving…' : 'Save'
+    },
+    $saveColor() {
+      return this.saving ? this.secondary + '22' : this.primary + '22'
     },
   },
 
@@ -126,16 +196,16 @@ export default Blits.Component('NoteEditor', {
     // In a real app, you'd integrate a proper text input behavior.
     up() {
       // focus title semantics: prepend marker to indicate edit
-      this.title = this.title.endsWith(' ▮') ? this.title : `${this.title} ▮`
+      this.title = this.title && this.title.endsWith(' ▮') ? this.title : (this.title + ' ▮')
     },
     down() {
-      this.title = this.title.replace(/ ▮$/, '')
+      this.title = this.title ? this.title.replace(/ ▮$/, '') : ''
     },
     left() {
-      this.content = `${this.content} •`
+      this.content = (this.content || '') + ' •'
     },
     right() {
-      if (this.content.endsWith(' •')) this.content = this.content.slice(0, -2)
+      if (this.content && this.content.endsWith(' •')) this.content = this.content.slice(0, -2)
     },
     // Enter to save explicitly
     enter() {

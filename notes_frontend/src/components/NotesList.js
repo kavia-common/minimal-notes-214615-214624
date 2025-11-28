@@ -21,40 +21,40 @@ export default Blits.Component('NotesList', {
       <Element
         :w="$w"
         :h="$h"
-        :color="theme.colors.surface"
-        :effects="[$shader('radius', { radius: theme.effects.radius }), $shadow(theme.effects.shadow)]"
+        :color="$surface"
+        :effects="$panelEffects"
       />
 
       <!-- Header -->
-      <Element x="24" y="16" :w="$w - 48" h="64">
-        <Text content="Notes" size="36" color="${theme.colors.text}" />
-        <Element x="$w - 48 - 44" y="0" w="44" h="44"
-                 :effects="[$shader('radius', { radius: theme.effects.radiusSm })]"
-                 :color="$hoverNew ? '${theme.colors.primary}22' : 'transparent'"
-                 @mouseenter="$hoverNew = true" @mouseleave="$hoverNew = false"
-                 @enter="$handleNew()">
-          <Text content="+" size="36" align="center" mount="{x:0.5,y:0.5}" x="22" y="22" color="${theme.colors.primary}" />
+      <Element x="24" y="16" :w="$headerW" h="64">
+        <Text content="Notes" size="36" :color="$textColor" />
+        <Element :x="$addBtnX" y="0" w="44" h="44"
+                 :effects="$btnEffects"
+                 :color="$addBtnColor"
+                 @mouseenter="$onAddHover" @mouseleave="$onAddLeave"
+                 @enter="$handleNew">
+          <Text content="+" size="36" align="center" :mountX="$center" :mountY="$center" x="22" y="22" :color="$primary" />
         </Element>
       </Element>
 
       <!-- List -->
-      <Element x="16" y="88" :w="$w - 32" :h="$h - 104">
-        <Element :y.transition="{ value: $scrollY, duration: ${theme.transition.normal}, easing: '${theme.transition.easing}' }" />
+      <Element x="16" y="88" :w="$listW" :h="$listH">
+        <Element :y.transition="$scrollTransition" />
         <For each="$items" let="item" index="i">
-          <Element :y="i * 92 + $scrollY" :w="$w - 32" h="84"
-                   :effects="[$shader('radius', { radius: theme.effects.radiusSm })]"
-                   :color="item.id === $selectedId ? '${theme.colors.primary}12' : 'transparent'"
+          <Element :y="$itemY(i)" :w="$rowW" h="84"
+                   :effects="$rowEffects"
+                   :color="$rowColor(item, i)"
                    @enter="$select(item.id)">
-            <Element x="16" y="12" :w="$w - 32 - 16 - 16 - 44" h="60">
-              <Text :content="item.title || 'Untitled'" size="28" color="${theme.colors.text}" maxwidth="$w - 32 - 16 - 16 - 44" />
-              <Text :content="new Date(item.updatedAt).toLocaleString()" size="20" y="34" color="${theme.colors.textMuted}" />
+            <Element x="16" y="12" :w="$titleW" h="60">
+              <Text :content="$itemTitle(item)" size="28" :color="$textColor" :maxwidth="$titleW" />
+              <Text :content="$itemUpdated(item)" size="20" y="34" :color="$textMuted" />
             </Element>
-            <Element :x="$w - 32 - 44" y="20" w="44" h="44"
-                     :effects="[$shader('radius', { radius: theme.effects.radiusSm })]"
-                     :color="$hoverIdx === i ? '${theme.colors.error}22' : 'transparent'"
-                     @mouseenter="$hoverIdx = i" @mouseleave="$hoverIdx = -1"
+            <Element :x="$trashX" y="20" w="44" h="44"
+                     :effects="$btnEffects"
+                     :color="$trashColor(i)"
+                     @mouseenter="$onTrashHover(i)" @mouseleave="$onTrashLeave"
                      @enter="$remove(item.id, i)">
-              <Text content="🗑" size="24" align="center" mount="{x:0.5,y:0.5}" x="22" y="22" />
+              <Text content="🗑" size="24" align="center" :mountX="$center" :mountY="$center" x="22" y="22" />
             </Element>
           </Element>
         </For>
@@ -63,16 +63,77 @@ export default Blits.Component('NotesList', {
   `,
 
   state() {
+    const w = 560
+    const h = 984
+    const headerW = w - 48
+    const listW = w - 32
+    const listH = h - 104
+    const rowW = w - 32
+    const titleW = w - 32 - 16 - 16 - 44
+    const addBtnX = w - 48 - 44
+    const trashX = w - 32 - 44
+
+    // colors/effects
+    const surface = theme.colors.surface
+    const primary = theme.colors.primary
+    const textColor = theme.colors.text
+    const textMuted = theme.colors.textMuted
+    const error = theme.colors.error
+    const center = 0.5
+
+    // Effects replaced with plain objects for compatibility
+    const panelEffects = [
+      { type: 'radius', radius: theme.effects.radius },
+      { type: 'shadow', ...theme.effects.shadow },
+    ]
+    const btnEffects = [
+      { type: 'radius', radius: theme.effects.radiusSm },
+    ]
+    const rowEffects = [
+      { type: 'radius', radius: theme.effects.radiusSm },
+    ]
+
+    // transitions as simple object binding
+    const scrollTransition = {
+      value: 0,
+      duration: theme.transition.normal,
+      easing: theme.transition.easing,
+    }
+
     return {
-      theme,
+      // geometry
+      w,
+      h,
+      headerW,
+      listW,
+      listH,
+      rowW,
+      titleW,
+      addBtnX,
+      trashX,
+
+      // colors/effects
+      surface,
+      primary,
+      textColor,
+      textMuted,
+      error,
+      center,
+      panelEffects,
+      btnEffects,
+      rowEffects,
+
+      // state
       items: getNotes(),
       selectedId: this.selectedId ?? null,
       scrollY: 0,
       hoverIdx: -1,
-      hoverNew: false,
-      w: 560,
-      h: 984,
+      addHover: false,
+      addBtnColor: 'transparent',
       unsub: null,
+
+      // transitions
+      scrollTransition,
     }
   },
 
@@ -92,6 +153,40 @@ export default Blits.Component('NotesList', {
   },
 
   methods: {
+    $itemTitle(item) {
+      return item && item.title ? item.title : 'Untitled'
+    },
+    $itemUpdated(item) {
+      try {
+        return new Date(item.updatedAt).toLocaleString()
+      } catch {
+        return ''
+      }
+    },
+    $rowColor(item) {
+      return item && item.id === this.selectedId ? this.primary + '12' : 'transparent'
+    },
+    $itemY(i) {
+      return i * 92 + this.scrollY
+    },
+    $trashColor(i) {
+      return this.hoverIdx === i ? this.error + '22' : 'transparent'
+    },
+    $onTrashHover(i) {
+      this.hoverIdx = i
+    },
+    $onTrashLeave() {
+      this.hoverIdx = -1
+    },
+    $onAddHover() {
+      this.addHover = true
+      this.addBtnColor = this.primary + '22'
+    },
+    $onAddLeave() {
+      this.addHover = false
+      this.addBtnColor = 'transparent'
+    },
+
     $emitSelect(id) {
       this.selectedId = id
       if (typeof this.onSelect === 'function') {

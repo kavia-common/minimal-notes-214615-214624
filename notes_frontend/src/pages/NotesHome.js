@@ -11,26 +11,26 @@ export default Blits.Component('NotesHome', {
   },
 
   template: `
-    <Element w="1920" h="1080" :color="theme.colors.background">
-      <Element w="1920" h="1080" :color="theme.colors.overlay" />
+    <Element w="1920" h="1080" color="$appBg">
+      <Element w="1920" h="1080" :color="$appOverlay" />
 
-      <Element :x="$pad" :y="$pad" :w="$contentW" :h="theme.layout.headerHeight"
+      <Element :x="$pad" :y="$pad" :w="$contentW" :h="$headerH"
                :effects="$headerEffects"
-               :color="theme.colors.surface">
-        <Text content="Minimal Notes" :x="$pad" y="24" size="40" color="${theme.colors.text}" />
-        <Text :content="$apiLabel" :x="$pad" y="64" size="20" color="${theme.colors.textMuted}" />
-        <Element :x="$contentW - 140" y="20" w="120" h="48"
+               :color="$surface">
+        <Text content="Minimal Notes" :x="$pad" y="24" size="40" :color="$textColor" />
+        <Text :content="$apiLabel" :x="$pad" y="64" size="20" :color="$textMuted" />
+        <Element :x="$newBtnX" y="20" w="120" h="48"
                  :effects="$btnEffects"
                  :color="$btnColor"
-                 @mouseenter="$onHoverNew(true)" @mouseleave="$onHoverNew(false)"
-                 @enter="$newNote()">
-          <Text content="+ New" size="26" align="center" x="60" y="24" color="${theme.colors.primary}" />
+                 @mouseenter="enterHover" @mouseleave="leaveHover"
+                 @enter="newNote">
+          <Text content="+ New" size="26" align="center" x="60" y="24" :color="$primary" />
         </Element>
       </Element>
 
       <Element :x="$pad" :y="$contentY" :w="$contentW" :h="$contentH">
-        <Element :w="theme.layout.sidebarWidth" :h="$contentH">
-          <NotesList :selectedId="$selectedId" :onSelect="$onSelect" :w="theme.layout.sidebarWidth" :h="$contentH" />
+        <Element :w="$sidebarW" :h="$contentH">
+          <NotesList :selectedId="$selectedId" :onSelect="onSelect" :w="$sidebarW" :h="$contentH" />
         </Element>
 
         <Element :x="$rightX" :w="$rightW" :h="$contentH">
@@ -54,47 +54,90 @@ export default Blits.Component('NotesHome', {
     }
     const label = 'API: ' + (apiBase ? apiBase : 'in-memory')
 
-    // layout numbers
+    // layout numbers precomputed
     const pad = 24
     const fullW = 1920
     const fullH = 1080
-    const contentW = fullW - pad * 2 // 1872
-    const contentY = pad + theme.layout.headerHeight + theme.layout.gap
+    const headerH = theme.layout.headerHeight
+    const sidebarW = theme.layout.sidebarWidth
+    const gap = theme.layout.gap
+
+    const contentW = fullW - pad * 2
+    const contentY = pad + headerH + gap
     const contentH = fullH - (contentY + pad)
-    const rightX = theme.layout.sidebarWidth + theme.layout.gap
-    const rightW = contentW - (theme.layout.sidebarWidth + theme.layout.gap)
+    const rightX = sidebarW + gap
+    const rightW = contentW - (sidebarW + gap)
+    const newBtnX = contentW - 140
+
+    // colors/effects precomputed (no inline objects/functions in template)
+    const appBg = theme.colors.background
+    const appOverlay = theme.colors.overlay
+    const surface = theme.colors.surface
+    const textColor = theme.colors.text
+    const textMuted = theme.colors.textMuted
+    const primary = theme.colors.primary
+
+    // Effects: use plain objects (no special helpers) to satisfy precompiler/linting
+    // Build effect objects explicitly to avoid spread syntax issues in precompiler
+    const headerEffects = [
+      { type: 'radius', radius: theme.effects.radiusLg },
+      { type: 'shadow',
+        x: theme.effects.shadowSm.x,
+        y: theme.effects.shadowSm.y,
+        blur: theme.effects.shadowSm.blur,
+        spread: theme.effects.shadowSm.spread,
+        color: theme.effects.shadowSm.color,
+      },
+    ]
+    const btnEffects = [
+      { type: 'radius', radius: theme.effects.radiusSm },
+    ]
 
     return {
-      theme,
-      hoverNew: false,
+      // theme parts used in simple bindings
+      appBg,
+      appOverlay,
+      surface,
+      textColor,
+      textMuted,
+      primary,
+
+      // ids and labels
       selectedId: selected,
       apiLabel: label,
 
-      // precomputed visual helpers
-      headerEffects: [$shader('radius', { radius: theme.effects.radiusLg }), $shadow(theme.effects.shadowSm)],
-      btnEffects: [$shader('radius', { radius: theme.effects.radiusSm })],
-      btnColor: 'transparent',
-
+      // layout
       pad,
+      headerH,
+      sidebarW,
       contentW,
       contentY,
       contentH,
       rightX,
       rightW,
+      newBtnX,
+
+      // effects and interactive color
+      headerEffects,
+      btnEffects,
+      btnColor: 'transparent',
     }
   },
 
   methods: {
-    $onSelect(id) {
+    onSelect(id) {
       this.selectedId = id
     },
-    $newNote() {
+    newNote() {
       const created = createNote({ title: 'New note' })
       this.selectedId = created.id
     },
-    $onHoverNew(v) {
-      this.hoverNew = !!v
-      this.btnColor = this.hoverNew ? '${theme.colors.primary}22' : 'transparent'
+    enterHover() {
+      // avoid inline ternary; assign precomputed string
+      this.btnColor = theme.colors.primary + '22'
+    },
+    leaveHover() {
+      this.btnColor = 'transparent'
     },
   },
 })
