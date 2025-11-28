@@ -39,13 +39,9 @@ export default Blits.Component('NoteEditor', {
   state() {
     const note = this.noteId ? getNoteById(this.noteId) : null
 
-    // dimensions
-    const appW = 1920
-    const gap = theme.layout.gap
-    const sidebar = Math.max(320, theme.layout.sidebarWidth)
-    const outerPad = gap * 3
-    const w = appW - (sidebar + outerPad)
-    const h = 984
+    // dimensions - respect parent-provided bounds
+    const w = this.w && Number(this.w) ? Number(this.w) : 1600
+    const h = this.h && Number(this.h) ? Number(this.h) : 1016
 
     const headerW = w - 48
     const titleW = w - 48

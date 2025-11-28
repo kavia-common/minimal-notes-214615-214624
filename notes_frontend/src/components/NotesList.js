@@ -75,8 +75,9 @@ export default Blits.Component('NotesList', {
   },
 
   state() {
-    const w = 560
-    const h = 984
+    // Use provided w/h if set by parent, otherwise fall back to defaults
+    const w = this.w && Number(this.w) ? Number(this.w) : 320
+    const h = this.h && Number(this.h) ? Number(this.h) : 1016
     const headerW = w - 48
     const listW = w - 32
     const listH = h - 104

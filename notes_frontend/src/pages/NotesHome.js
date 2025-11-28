@@ -12,20 +12,16 @@ export default Blits.Component('NotesHome', {
 
   template: `
     <Element w="1920" h="1080" color="$appBg" alpha="1" visible="true" zIndex="0">
-      <!-- Header label to verify page mount -->
-      <Text content="NotesHome" x="24" y="8" size="18" color="#6B7280" />
-
-      <!-- Fixed Header bar -->
-      <Element x="0" y="0" w="1920" h="$headerH" :color="$surface" :effects="$headerEffects" alpha="1" visible="true" zIndex="5">
+      <!-- Fixed Header bar (kept behind content to avoid coverage) -->
+      <Element x="0" y="0" w="1920" h="$headerH" :color="$surface" :effects="$headerEffects" alpha="1" visible="true" zIndex="3">
         <Element x="0" y="0" w="1920" :h="$headerH" color="$headerDebugBg" alpha="1" />
-        <Text content="Minimal Notes" x="24" y="24" size="40" :color="$textColor" />
-        <Text content="$apiLabel" x="24" y="64" size="20" :color="$textMuted" />
-        <Element x="$newBtnX" y="20" w="120" h="48" :effects="$btnEffects" :color="$btnColor" @mouseenter="enterHover" @mouseleave="leaveHover" @enter="newNote">
-          <Text content="+ New" size="26" align="center" x="60" y="24" :color="$primary" />
+        <Text content="Minimal Notes" x="24" y="16" size="32" :color="$textColor" />
+        <Text content="$apiLabel" x="24" y="48" size="18" :color="$textMuted" />
+        <Element x="$newBtnX" y="12" w="120" h="40" :effects="$btnEffects" :color="$btnColor" @mouseenter="enterHover" @mouseleave="leaveHover" @enter="newNote">
+          <Text content="+ New" size="22" align="center" x="60" y="20" :color="$primary" />
         </Element>
       </Element>
 
-      <!-- Two-pane Content Area with explicit static geometry -->
       <!-- LEFT: Notes List -->
       <Element x="0" y="64" w="320" h="$contentH" :color="$leftBg" alpha="1" visible="true" zIndex="6">
         <Element x="0" y="0" w="320" :h="$contentH" color="$leftDebugBg" alpha="1" />
@@ -57,16 +53,12 @@ export default Blits.Component('NotesHome', {
     // Layout: explicit static sizes to avoid runtime arithmetic in template
     const fullW = 1920
     const fullH = 1080
-    const headerH = 64 // instruction requires y=64 for content start
-    const sidebarW = 320
+    const headerH = 64 // content starts at y=64
     const contentY = 64
     const contentH = fullH - contentY
     const rightX = 320
     const rightW = fullW - rightX
     const newBtnX = fullW - 24 - 120
-    const pad = 24
-    const gap = theme.layout.gap
-    const contentW = fullW - (pad * 2)
 
     // Visuals
     const appBg = theme.colors.background
@@ -100,7 +92,7 @@ export default Blits.Component('NotesHome', {
     console.log('[NotesHome] init', {
       notesCount: initial ? initial.length : 0,
       selected,
-      sizes: { pad, contentW, contentH, sidebarW, rightW },
+      sizes: { contentH, rightW },
     })
 
     return {
@@ -123,10 +115,7 @@ export default Blits.Component('NotesHome', {
       selectedId: selected,
 
       // layout
-      pad,
       headerH,
-      sidebarW,
-      contentW,
       contentY,
       contentH,
       rightX,
@@ -150,7 +139,7 @@ export default Blits.Component('NotesHome', {
           list: { x: 0, y: 64, w: 320, h: this.contentH },
           editor: { x: 320, y: 64, w: this.rightW, h: this.contentH },
         },
-        z: { header: 5, panes: 6 },
+        z: { header: 3, panes: 6 },
       })
     },
   },
