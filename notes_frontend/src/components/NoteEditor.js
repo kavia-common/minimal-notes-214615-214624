@@ -3,35 +3,29 @@ import { theme } from '../theme.js'
 import { getNoteById, updateNote, subscribe } from '../services/notesService.js'
 
 export default Blits.Component('NoteEditor', {
-  /**
-   * @type {['noteId']}
-   */
   props: ['noteId'],
 
   template: `
-    <Element :w="$w" :h="$h" alpha="1" visible="true">
+    <Element w="$w" h="$h" alpha="1" visible="true">
       <!-- Surface -->
-      <Element :w="$w" :h="$h" :color="$surface" :effects="$panelEffects" />
+      <Element w="$w" h="$h" color="$surface" />
 
       <!-- Header controls -->
-      <Element x="24" y="16" :w="$headerW" h="64">
-        <Text :content="$titleText" size="36" :color="$textColor" />
-        <Element :x="$saveX" y="6" w="120" h="44"
-                 :effects="$btnEffects"
-                 :color="$saveColor"
-                 @enter="$save(true)">
-          <Text :content="$saveLabel" size="24" align="center" :mountX="$center" :mountY="$center" x="60" y="22" :color="$primary" />
+      <Element x="24" y="16" w="$headerW" h="64">
+        <Text content="$titleDisplay" size="36" color="$textColor" />
+        <Element x="$saveX" y="6" w="120" h="44" color="$saveBtnColor" @enter="$save(true)">
+          <Text content="$saveLabel" size="24" align="center" x="60" y="22" color="$primary" />
         </Element>
       </Element>
 
       <!-- Title area -->
-      <Element x="24" y="96" :w="$titleW" h="64" :color="$bgColor" :effects="$inputEffects">
-        <Text :content="$titleText" size="28" x="16" y="18" :color="$textColor" />
+      <Element x="24" y="96" w="$titleW" h="64" color="$bgColor">
+        <Text content="$titleDisplay" size="28" x="16" y="18" color="$textColor" />
       </Element>
 
       <!-- Content area -->
-      <Element x="24" y="176" :w="$contentW" :h="$contentH" :color="$bgColor" :effects="$inputEffects">
-        <Text :content="$contentText" size="24" x="16" y="16" :color="$textColor" lineheight="36" :maxwidth="$contentTextW" />
+      <Element x="24" y="176" w="$contentW" h="$contentH" color="$bgColor">
+        <Text content="$contentDisplay" size="24" x="16" y="16" color="$textColor" lineheight="36" maxwidth="$contentTextW" />
       </Element>
     </Element>
   `,
@@ -39,7 +33,6 @@ export default Blits.Component('NoteEditor', {
   state() {
     const note = this.noteId ? getNoteById(this.noteId) : null
 
-    // dimensions - respect parent-provided bounds
     const w = this.w && Number(this.w) ? Number(this.w) : 1600
     const h = this.h && Number(this.h) ? Number(this.h) : 1016
 
@@ -50,50 +43,17 @@ export default Blits.Component('NoteEditor', {
     const contentTextW = w - 48 - 32
     const saveX = w - 48 - 120
 
-    // colors/effects
     const surface = theme.colors.surface
     const bgColor = theme.colors.background
     const primary = theme.colors.primary
     const secondary = theme.colors.secondary
     const textColor = theme.colors.text
-    const center = 0.5
-
-    // Effects: plain objects for precompiler compatibility
-    const panelEffects = [
-      { type: 'radius', radius: theme.effects.radius },
-      {
-        type: 'shadow',
-        x: theme.effects.shadow.x,
-        y: theme.effects.shadow.y,
-        blur: theme.effects.shadow.blur,
-        spread: theme.effects.shadow.spread,
-        color: theme.effects.shadow.color,
-      },
-    ]
-    const btnEffects = [{ type: 'radius', radius: theme.effects.radiusSm }]
-    const inputEffects = [{ type: 'radius', radius: theme.effects.radiusSm }]
 
     return {
       // geometry
-      w,
-      h,
-      headerW,
-      titleW,
-      contentW,
-      contentH,
-      contentTextW,
-      saveX,
-
+      w, h, headerW, titleW, contentW, contentH, contentTextW, saveX,
       // visuals
-      surface,
-      bgColor,
-      primary,
-      secondary,
-      textColor,
-      center,
-      panelEffects,
-      btnEffects,
-      inputEffects,
+      surface, bgColor, primary, secondary, textColor,
 
       // state
       title: note && note.title ? note.title : '',
@@ -102,31 +62,35 @@ export default Blits.Component('NoteEditor', {
       _dirtyTimer: null,
       _unsub: null,
       _lastNoteId: this.noteId !== undefined && this.noteId !== null ? this.noteId : null,
+
+      // computed display strings (no template ternaries)
+      titleDisplay: note && note.title ? note.title : 'Untitled',
+      contentDisplay: note && note.content ? note.content : 'Start typing…',
+      saveBtnColor: primary + '22',
+      saveLabel: 'Save',
     }
   },
 
   hooks: {
     ready() {
-      console.log('[NoteEditor] Ready', {
-        noteId: this.noteId || null,
-        geom: { x: 0, y: 0, w: this.w, h: this.h },
-      })
-      // reflect external updates/selection
+      // initialize save button visuals based on saving state
+      this.$updateSaveVisuals()
       this._unsub = subscribe(() => {
         if (!this.noteId) {
           this.title = ''
           this.content = ''
+          this.titleDisplay = 'Untitled'
+          this.contentDisplay = 'Start typing…'
           return
         }
-        if (this._lastNoteId !== this.noteId) {
-          const n = getNoteById(this.noteId)
-          this._lastNoteId = this.noteId
-          this.title = n && n.title ? n.title : ''
-          this.content = n && n.content ? n.content : ''
-        } else {
-          const n = getNoteById(this.noteId)
-          this.title = n && n.title ? n.title : this.title
-          // keep content as-is while typing; store authoritative after save
+        const n = getNoteById(this.noteId)
+        this._lastNoteId = this.noteId
+        if (n) {
+          this.title = n.title || ''
+          this.content = n.content || ''
+          this.titleDisplay = this.title.length ? this.title : 'Untitled'
+          // keep contentDisplay stable unless empty
+          this.contentDisplay = this.content.length ? this.content : 'Start typing…'
         }
       })
     },
@@ -140,32 +104,28 @@ export default Blits.Component('NoteEditor', {
       const n = newId ? getNoteById(newId) : null
       this.title = n && n.title ? n.title : ''
       this.content = n && n.content ? n.content : ''
+      this.titleDisplay = this.title.length ? this.title : 'Untitled'
+      this.contentDisplay = this.content.length ? this.content : 'Start typing…'
       this._lastNoteId = newId
     },
     title() {
+      this.titleDisplay = this.title.length ? this.title : 'Untitled'
       this.$queueAutoSave()
     },
     content() {
+      this.contentDisplay = this.content.length ? this.content : 'Start typing…'
       this.$queueAutoSave()
     },
-  },
-
-  computed: {
-    $titleText() {
-      return this.title && this.title.length ? this.title : 'Untitled'
-    },
-    $contentText() {
-      return this.content && this.content.length ? this.content : 'Start typing…'
-    },
-    $saveLabel() {
-      return this.saving ? 'Saving…' : 'Save'
-    },
-    $saveColor() {
-      return this.saving ? this.secondary + '22' : this.primary + '22'
+    saving() {
+      this.$updateSaveVisuals()
     },
   },
 
   methods: {
+    $updateSaveVisuals() {
+      this.saveLabel = this.saving ? 'Saving…' : 'Save'
+      this.saveBtnColor = (this.saving ? this.secondary : this.primary) + '22'
+    },
     $queueAutoSave() {
       if (!this.noteId) return
       if (this._dirtyTimer) this.$clearTimeout(this._dirtyTimer)
@@ -176,11 +136,7 @@ export default Blits.Component('NoteEditor', {
     $save(explicit) {
       if (!this.noteId) return
       this.saving = true
-      updateNote(this.noteId, {
-        title: this.title,
-        content: this.content,
-      })
-      // simulate a short delay
+      updateNote(this.noteId, { title: this.title, content: this.content })
       this.$setTimeout(() => {
         this.saving = false
       }, explicit ? 200 : 50)
@@ -188,7 +144,6 @@ export default Blits.Component('NoteEditor', {
   },
 
   input: {
-    // Simple demo editing via remote/keyboard
     up() {
       this.title = this.title && this.title.endsWith(' ■') ? this.title : this.title + ' ■'
     },

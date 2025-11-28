@@ -1,81 +1,49 @@
 import Blits from '@lightningjs/blits'
 import { theme } from '../theme.js'
-import {
-  getNotes,
-  createNote,
-  deleteNote,
-  subscribe,
-} from '../services/notesService.js'
+import { getNotes, createNote, deleteNote, subscribe } from '../services/notesService.js'
 
 export default Blits.Component('NotesList', {
-  /**
-   * @type {['onSelect','selectedId']}
-   */
   props: ['onSelect', 'selectedId'],
 
-  components: {},
-
   template: `
-    <Element :w="$w" :h="$h" alpha="1" visible="true">
+    <Element w="$w" h="$h" alpha="1" visible="true">
       <!-- Panel Surface -->
-      <Element :w="$w" :h="$h" :color="$surface" :effects="$panelEffects" />
+      <Element w="$w" h="$h" color="$surface" />
 
       <!-- Header -->
-      <Element x="24" y="16" :w="$headerW" h="64">
-        <Text content="Notes" size="36" :color="$textColor" />
-        <Element :x="$addBtnX" y="0" w="44" h="44"
-                 :effects="$btnEffects"
-                 :color="$addBtnColor"
+      <Element x="24" y="16" w="$headerW" h="64">
+        <Text content="Notes" size="36" color="$textColor" />
+        <Element x="$addBtnX" y="0" w="44" h="44"
+                 color="$addBtnColor"
                  @mouseenter="$onAddHover" @mouseleave="$onAddLeave"
                  @enter="$handleNew">
-          <Text content="+" size="36" align="center" :mountX="$center" :mountY="$center" x="22" y="22" :color="$primary" />
+          <Text content="+" size="36" align="center" x="22" y="22" />
         </Element>
       </Element>
 
       <!-- List -->
-      <Element x="16" y="88" :w="$listW" :h="$listH">
+      <Element x="16" y="88" w="$listW" h="$listH">
         <For each="$items" let="item" index="i">
-          <Element :y="$itemY(i)" :w="$rowW" h="84"
-                   :effects="$rowEffects"
-                   :color="$rowColor(item, i)"
+          <Element y="$rowYs[i]" w="$rowW" h="84"
+                   color="$rowColors[i]"
                    @enter="$select(item.id)">
-            <Element x="16" y="12" :w="$titleW" h="60">
-              <Text :content="$itemTitle(item)" size="28" :color="$textColor" :maxwidth="$titleW" />
-              <Text :content="$itemUpdated(item)" size="20" y="34" :color="$textMuted" />
+            <Element x="16" y="12" w="$titleW" h="60">
+              <Text content="$titles[i]" size="28" color="$textColor" maxwidth="$titleW" />
+              <Text content="$updateds[i]" size="20" y="34" color="$textMuted" />
             </Element>
-            <Element :x="$trashX" y="20" w="44" h="44"
-                     :effects="$btnEffects"
-                     :color="$trashColor(i)"
+            <Element x="$trashX" y="20" w="44" h="44"
+                     color="$trashColors[i]"
                      @mouseenter="$onTrashHover(i)" @mouseleave="$onTrashLeave"
                      @enter="$remove(item.id, i)">
-              <Text content="🗑" size="24" align="center" :mountX="$center" :mountY="$center" x="22" y="22" />
+              <Text content="🗑" size="24" align="center" x="22" y="22" />
             </Element>
           </Element>
         </For>
       </Element>
     </Element>
   `,
-  hooks: {
-    ready() {
-      console.log('[NotesList] Ready', {
-        items: (this.items && this.items.length) || 0,
-        geom: { x: 0, y: 0, w: this.w, h: this.h },
-      })
-      // subscribe to note updates
-      this.unsub = subscribe((notes) => {
-        this.items = notes
-        if ((this.selectedId === undefined || this.selectedId === null) && notes[0]) {
-          this.$emitSelect(notes[0].id)
-        }
-      })
-    },
-    destroy() {
-      if (this.unsub) this.unsub()
-    },
-  },
 
   state() {
-    // Use provided w/h if set by parent, otherwise fall back to defaults
     const w = this.w && Number(this.w) ? Number(this.w) : 320
     const h = this.h && Number(this.h) ? Number(this.h) : 1016
     const headerW = w - 48
@@ -86,111 +54,77 @@ export default Blits.Component('NotesList', {
     const addBtnX = w - 48 - 44
     const trashX = w - 32 - 44
 
-    // colors/effects
     const surface = theme.colors.surface
     const primary = theme.colors.primary
     const textColor = theme.colors.text
     const textMuted = theme.colors.textMuted
     const error = theme.colors.error
-    const center = 0.5
 
-    // Effects replaced with plain objects for compatibility
-    const panelEffects = [
-      { type: 'radius', radius: theme.effects.radius },
-      {
-        type: 'shadow',
-        x: theme.effects.shadow.x,
-        y: theme.effects.shadow.y,
-        blur: theme.effects.shadow.blur,
-        spread: theme.effects.shadow.spread,
-        color: theme.effects.shadow.color,
-      },
-    ]
-    const btnEffects = [{ type: 'radius', radius: theme.effects.radiusSm }]
-    const rowEffects = [{ type: 'radius', radius: theme.effects.radiusSm }]
+    const items = getNotes()
+    const selected = this.selectedId !== undefined && this.selectedId !== null ? String(this.selectedId) : ''
 
-    // transitions as simple object binding
-    const scrollTransition = {
-      value: 0,
-      duration: theme.transition.normal,
-      easing: theme.transition.easing,
-    }
-
-    // initial incoming selection prop robustness
-    const incomingSelected =
-      this.selectedId !== undefined && this.selectedId !== null ? this.selectedId : null
+    // Precompute arrays to avoid inline functions/ternaries in template
+    const titles = items.map(n => (n && n.title ? n.title : 'Untitled'))
+    const updateds = items.map(n => {
+      try { return new Date(n.updatedAt).toLocaleString() } catch { return '' }
+    })
+    const rowYs = items.map((_, i) => i * 92) // static row positions (no scrolling in this simplified safe template)
+    const rowColors = items.map(n => (String(n.id) === selected ? primary + '12' : 'transparent'))
+    const trashColors = items.map((_, i) => (this.hoverIdx === i ? error + '22' : 'transparent'))
 
     return {
       // geometry
-      w,
-      h,
-      headerW,
-      listW,
-      listH,
-      rowW,
-      titleW,
-      addBtnX,
-      trashX,
-
-      // colors/effects
-      surface,
-      primary,
-      textColor,
-      textMuted,
-      error,
-      center,
-      panelEffects,
-      btnEffects,
-      rowEffects,
+      w, h, headerW, listW, listH, rowW, titleW, addBtnX, trashX,
+      // visuals
+      surface, primary, textColor, textMuted, error,
 
       // state
-      items: getNotes(),
-      selectedId: incomingSelected,
-      scrollY: 0,
+      items,
+      selectedId: this.selectedId !== undefined && this.selectedId !== null ? this.selectedId : null,
       hoverIdx: -1,
-      addHover: false,
       addBtnColor: 'transparent',
-      unsub: null,
 
-      // transitions
-      scrollTransition,
+      // precomputed
+      titles, updateds, rowYs, rowColors, trashColors,
     }
   },
 
+  hooks: {
+    ready() {
+      this.unsub = subscribe((notes) => {
+        this.items = notes
+        // recompute display caches whenever items change
+        const selected = this.selectedId !== undefined && this.selectedId !== null ? String(this.selectedId) : ''
+        this.titles = notes.map(n => (n && n.title ? n.title : 'Untitled'))
+        this.updateds = notes.map(n => { try { return new Date(n.updatedAt).toLocaleString() } catch { return '' } })
+        this.rowYs = notes.map((_, i) => i * 92)
+        this.rowColors = notes.map(n => (String(n.id) === selected ? this.primary + '12' : 'transparent'))
+        this.trashColors = notes.map((_, i) => (this.hoverIdx === i ? this.error + '22' : 'transparent'))
+
+        if ((this.selectedId === undefined || this.selectedId === null) && notes[0]) {
+          this.$emitSelect(notes[0].id)
+        }
+      })
+    },
+    destroy() {
+      if (this.unsub) this.unsub()
+    },
+  },
+
   methods: {
-    $itemTitle(item) {
-      return item && item.title ? item.title : 'Untitled'
-    },
-    $itemUpdated(item) {
-      try {
-        return new Date(item.updatedAt).toLocaleString()
-      } catch {
-        return ''
-      }
-    },
-    $rowColor(item) {
-      const a = item && item.id != null ? String(item.id) : ''
-      const b = this.selectedId != null ? String(this.selectedId) : ''
-      return a === b ? this.primary + '12' : 'transparent'
-    },
-    $itemY(i) {
-      return i * 92 + this.scrollY
-    },
-    $trashColor(i) {
-      return this.hoverIdx === i ? this.error + '22' : 'transparent'
-    },
     $onTrashHover(i) {
       this.hoverIdx = i
+      // update trashColors to reflect hover
+      this.trashColors = this.items.map((_, idx) => (idx === i ? this.error + '22' : 'transparent'))
     },
     $onTrashLeave() {
       this.hoverIdx = -1
+      this.trashColors = this.items.map(() => 'transparent')
     },
     $onAddHover() {
-      this.addHover = true
       this.addBtnColor = this.primary + '22'
     },
     $onAddLeave() {
-      this.addHover = false
       this.addBtnColor = 'transparent'
     },
 
@@ -199,6 +133,9 @@ export default Blits.Component('NotesList', {
       if (typeof this.onSelect === 'function') {
         this.onSelect(id)
       }
+      // Update rowColors based on new selection
+      const selected = this.selectedId !== undefined && this.selectedId !== null ? String(this.selectedId) : ''
+      this.rowColors = this.items.map(n => (String(n.id) === selected ? this.primary + '12' : 'transparent'))
     },
     $select(id) {
       this.$emitSelect(id)
@@ -208,12 +145,19 @@ export default Blits.Component('NotesList', {
       this.$emitSelect(created.id)
     },
     $remove(id, idx) {
-      // basic confirm UI by quickly requiring second Enter within 1s
       if (this.hoverIdx === idx && this._confirmingId === id) {
         deleteNote(id)
         this._confirmingId = null
-        // adjust selection
         const remaining = getNotes()
+        this.items = remaining
+        // recompute caches
+        this.titles = remaining.map(n => (n && n.title ? n.title : 'Untitled'))
+        this.updateds = remaining.map(n => { try { return new Date(n.updatedAt).toLocaleString() } catch { return '' } })
+        this.rowYs = remaining.map((_, i) => i * 92)
+        const selected = this.selectedId !== undefined && this.selectedId !== null ? String(this.selectedId) : ''
+        this.rowColors = remaining.map(n => (String(n.id) === selected ? this.primary + '12' : 'transparent'))
+        this.trashColors = remaining.map(() => 'transparent')
+
         if (remaining.length) {
           this.$emitSelect(remaining[0].id)
         } else {
@@ -222,7 +166,6 @@ export default Blits.Component('NotesList', {
         return
       }
       this._confirmingId = id
-      // reset after timeout
       this.$setTimeout(() => {
         if (this._confirmingId === id) this._confirmingId = null
       }, 1200)
