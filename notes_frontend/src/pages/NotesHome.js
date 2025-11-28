@@ -11,15 +11,17 @@ export default Blits.Component('NotesHome', {
   },
 
   template: `
-    <Element w="1920" h="1080" color="$appBg">
+    <Element w="1920" h="1080" color="$appBg" alpha="1" visible="true">
       <!-- simple static overlay color binding -->
-      <Element w="1920" h="1080" :color="$appOverlay" />
+      <Element w="1920" h="1080" :color="$appOverlay" alpha="0.0" />
 
       <!-- Visible header ensures UI is never blank -->
       <Text content="NotesHome" x="24" y="8" size="18" color="#6B7280" />
 
       <!-- Header bar -->
-      <Element x="$pad" y="$pad" w="$contentW" h="$headerH" :color="$surface" :effects="$headerEffects">
+      <Element x="$pad" y="$pad" w="$contentW" h="$headerH" :color="$surface" :effects="$headerEffects" alpha="1" visible="true">
+        <!-- temporary border via inner outline element -->
+        <Element x="0" y="0" :w="$contentW" :h="$headerH" color="#93c5fd" alpha="0.25" />
         <Text content="Minimal Notes" x="$pad" y="24" size="40" :color="$textColor" />
         <Text content="$apiLabel" x="$pad" y="64" size="20" :color="$textMuted" />
         <Element x="$newBtnX" y="20" w="120" h="48" :effects="$btnEffects" :color="$btnColor" @mouseenter="enterHover" @mouseleave="leaveHover" @enter="newNote">
@@ -28,14 +30,14 @@ export default Blits.Component('NotesHome', {
       </Element>
 
       <!-- Content area -->
-      <Element x="$pad" y="$contentY" w="$contentW" h="$contentH">
+      <Element x="$pad" y="$contentY" w="$contentW" h="$contentH" alpha="1" visible="true">
         <!-- Sidebar -->
-        <Element w="$sidebarW" h="$contentH">
+        <Element w="$sidebarW" h="$contentH" color="#fee2e2" alpha="0.3" visible="true">
           <NotesList selectedId="$selectedId" onSelect="onSelect" w="$sidebarW" h="$contentH" />
         </Element>
 
         <!-- Editor -->
-        <Element x="$rightX" w="$rightW" h="$contentH">
+        <Element x="$rightX" w="$rightW" h="$contentH" color="#dcfce7" alpha="0.3" visible="true">
           <NoteEditor noteId="$selectedId" w="$rightW" h="$contentH" />
         </Element>
       </Element>
