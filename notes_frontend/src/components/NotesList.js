@@ -55,6 +55,21 @@ export default Blits.Component('NotesList', {
       </Element>
     </Element>
   `,
+  hooks: {
+    ready() {
+      console.log('[NotesList] Ready: items', (this.items && this.items.length) || 0)
+      // subscribe to note updates
+      this.unsub = subscribe((notes) => {
+        this.items = notes
+        if ((this.selectedId === undefined || this.selectedId === null) && notes[0]) {
+          this.$emitSelect(notes[0].id)
+        }
+      })
+    },
+    destroy() {
+      if (this.unsub) this.unsub()
+    },
+  },
 
   state() {
     const w = 560
@@ -136,21 +151,6 @@ export default Blits.Component('NotesList', {
       // transitions
       scrollTransition,
     }
-  },
-
-  hooks: {
-    ready() {
-      // subscribe to note updates
-      this.unsub = subscribe((notes) => {
-        this.items = notes
-        if ((this.selectedId === undefined || this.selectedId === null) && notes[0]) {
-          this.$emitSelect(notes[0].id)
-        }
-      })
-    },
-    destroy() {
-      if (this.unsub) this.unsub()
-    },
   },
 
   methods: {

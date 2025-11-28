@@ -15,9 +15,9 @@ export default Blits.Component('NotesHome', {
       <!-- Header label to verify page mount -->
       <Text content="NotesHome" x="24" y="8" size="18" color="#6B7280" />
 
-      <!-- Header bar -->
+      <!-- Header bar with solid border to confirm visibility -->
       <Element x="$pad" y="$pad" w="$contentW" h="$headerH" :color="$surface" :effects="$headerEffects" alpha="1" visible="true" zIndex="5">
-        <Element x="0" y="0" :w="$contentW" :h="$headerH" color="#93c5fd" alpha="0.25" />
+        <Element x="0" y="0" :w="$contentW" :h="$headerH" color="$headerDebugBg" alpha="1" />
         <Text content="Minimal Notes" x="$pad" y="24" size="40" :color="$textColor" />
         <Text content="$apiLabel" x="$pad" y="64" size="20" :color="$textMuted" />
         <Element x="$newBtnX" y="20" w="120" h="48" :effects="$btnEffects" :color="$btnColor" @mouseenter="enterHover" @mouseleave="leaveHover" @enter="newNote">
@@ -27,15 +27,15 @@ export default Blits.Component('NotesHome', {
 
       <!-- Two-pane Content Area -->
       <Element x="$pad" y="$contentY" w="$contentW" h="$contentH" alpha="1" visible="true" zIndex="1">
-        <!-- LEFT: Notes List (fixed ~320-560 width), with debug background/border -->
-        <Element x="0" y="0" w="$sidebarW" h="$contentH" :color="$leftBg" alpha="1" visible="true">
-          <Element x="0" y="0" :w="$sidebarW" :h="$contentH" color="#1d4ed8" alpha="0.06" />
+        <!-- LEFT: Notes List (fixed width), with debug background -->
+        <Element x="0" y="0" w="$sidebarW" h="$contentH" :color="$leftBg" alpha="1" visible="true" zIndex="2">
+          <Element x="0" y="0" :w="$sidebarW" :h="$contentH" color="$leftDebugBg" alpha="1" />
           <NotesList selectedId="$selectedId" onSelect="onSelect" w="$sidebarW" h="$contentH" />
         </Element>
 
-        <!-- RIGHT: Editor fills remaining width -->
-        <Element x="$rightX" y="0" w="$rightW" h="$contentH" :color="$rightBg" alpha="1" visible="true" zIndex="2">
-          <Element x="0" y="0" :w="$rightW" :h="$contentH" color="#065f46" alpha="0.06" />
+        <!-- RIGHT: Editor fills remaining width, with debug background -->
+        <Element x="$rightX" y="0" w="$rightW" h="$contentH" :color="$rightBg" alpha="1" visible="true" zIndex="1">
+          <Element x="0" y="0" :w="$rightW" :h="$contentH" color="$rightDebugBg" alpha="1" />
           <NoteEditor noteId="$selectedId" w="$rightW" h="$contentH" />
         </Element>
       </Element>
@@ -61,7 +61,6 @@ export default Blits.Component('NotesHome', {
     const fullW = 1920
     const fullH = 1080
     const headerH = theme.layout.headerHeight
-    // Ensure left pane around ~320px minimum; use theme default if larger
     const sidebarW = Math.max(320, theme.layout.sidebarWidth)
     const gap = theme.layout.gap
 
@@ -78,6 +77,12 @@ export default Blits.Component('NotesHome', {
     const textColor = theme.colors.text
     const textMuted = theme.colors.textMuted
     const primary = theme.colors.primary
+
+    // temp debug backgrounds to verify panes are visible
+    const headerDebugBg = '#dde7ff'
+    const leftDebugBg = '#c7d2fe'
+    const rightDebugBg = '#bbf7d0'
+
     const leftBg = surface
     const rightBg = surface
 
@@ -95,6 +100,12 @@ export default Blits.Component('NotesHome', {
     ]
     const btnEffects = [{ type: 'radius', radius: theme.effects.radiusSm }]
 
+    console.log('[NotesHome] init', {
+      notesCount: initial ? initial.length : 0,
+      selected,
+      sizes: { pad, contentW, contentH, sidebarW, rightW },
+    })
+
     return {
       // visuals
       appBg,
@@ -104,6 +115,9 @@ export default Blits.Component('NotesHome', {
       primary,
       leftBg,
       rightBg,
+      headerDebugBg,
+      leftDebugBg,
+      rightDebugBg,
 
       // labels
       apiLabel,
@@ -129,6 +143,16 @@ export default Blits.Component('NotesHome', {
       // interactive
       btnColor: 'transparent',
     }
+  },
+
+  hooks: {
+    ready() {
+      console.log('[NotesHome] Ready: mounted and panes should be visible', {
+        selectedId: this.selectedId,
+        sidebarW: this.sidebarW,
+        rightW: this.rightW,
+      })
+    },
   },
 
   methods: {

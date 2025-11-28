@@ -17,11 +17,15 @@ export default Blits.Application({
       </Element>
     </Element>
   `,
+  // Ensure initial route renders NotesHome without conditional logic
   routes: [{ path: '/', component: NotesHome }],
 
   hooks: {
     ready() {
       console.log('[App] Ready: application mounted and router initialized')
+    },
+    afterRouteUpdate({ route }) {
+      console.log('[App] Route updated to:', route && route.path ? route.path : route)
     },
   },
 })
