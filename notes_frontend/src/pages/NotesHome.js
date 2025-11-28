@@ -8,26 +8,20 @@ export default Blits.Component('NotesHome', {
   components: { NotesList, NoteEditor },
 
   template: `
-    <Element w="1920" h="1080" color="$appBg" alpha="1" visible="true" zIndex="0">
-      <!-- Fixed Header bar (kept below panes so it doesn't block them) -->
-      <Element x="0" y="0" w="1920" h="$headerH" color="$surface" alpha="1" visible="true" zIndex="3">
-        <Text content="Minimal Notes" x="24" y="16" size="32" color="$textColor" />
-        <Text content="$apiLabel" x="24" y="48" size="18" color="$textMuted" />
-        <Element x="$newBtnX" y="12" w="120" h="40" color="$btnColor" @mouseenter="enterHover" @mouseleave="leaveHover" @enter="newNote">
-          <Text content="+ New" size="22" align="center" x="60" y="20" color="$primary" />
-        </Element>
-      </Element>
+    <Element w="1920" h="1016" color="$appBg" alpha="1" visible="true" zIndex="0">
+      <!-- Fixed Header bar (zIndex above content but separate in App) -->
+      <Element x="0" y="-64" w="1920" h="$headerH" color="$surface" alpha="0" visible="false" zIndex="6"></Element>
 
       <!-- Guaranteed visible test block to confirm child region renders -->
-      <Element x="8" y="72" w="8" h="8" color="#10B981" alpha="1" visible="true" zIndex="7"></Element>
+      <Element x="8" y="8" w="8" h="8" color="#10B981" alpha="1" visible="true" zIndex="1"></Element>
 
       <!-- LEFT: Notes List -->
-      <Element x="0" y="64" w="320" h="$contentH" color="$leftBg" alpha="1" visible="true" zIndex="5">
+      <Element x="0" y="0" w="320" h="$contentH" color="$leftBg" alpha="1" visible="true" zIndex="2">
         <NotesList selectedId="$selectedId" onSelect="onSelect" w="320" h="$contentH" />
       </Element>
 
       <!-- RIGHT: Note Editor -->
-      <Element x="320" y="64" w="$rightW" h="$contentH" color="$rightBg" alpha="1" visible="true" zIndex="5">
+      <Element x="320" y="0" w="$rightW" h="$contentH" color="$rightBg" alpha="1" visible="true" zIndex="2">
         <NoteEditor noteId="$selectedId" w="$rightW" h="$contentH" />
       </Element>
     </Element>
@@ -47,8 +41,7 @@ export default Blits.Component('NotesHome', {
     // Static layout values to avoid any inline arithmetic
     const fullW = 1920
     const headerH = 64
-    const contentY = 64
-    const contentH = 1080 - contentY
+    const contentH = 1016
     const rightX = 320
     const rightW = fullW - rightX
     const newBtnX = fullW - 24 - 120
@@ -89,7 +82,6 @@ export default Blits.Component('NotesHome', {
 
       // layout
       headerH,
-      contentY,
       contentH,
       rightX,
       rightW,
@@ -102,11 +94,11 @@ export default Blits.Component('NotesHome', {
 
   hooks: {
     ready() {
-      console.log('[NotesHome] Ready: panes visible', {
+      console.log('[NotesHome] Ready: child panes targeted geometry', {
         selectedId: this.selectedId,
         geom: {
-          list: { x: 0, y: 64, w: 320, h: this.contentH },
-          editor: { x: 320, y: 64, w: this.rightW, h: this.contentH },
+          list: { x: 0, y: 0, w: 320, h: this.contentH },
+          editor: { x: 320, y: 0, w: this.rightW, h: this.contentH },
         },
       })
     },

@@ -6,7 +6,7 @@ export default Blits.Component('NoteEditor', {
   props: ['noteId'],
 
   template: `
-    <Element w="$w" h="$h" alpha="1" visible="true">
+    <Element w="$w" h="$h" alpha="1" visible="true" zIndex="2">
       <!-- Surface -->
       <Element w="$w" h="$h" color="$surface" />
 

@@ -6,7 +6,7 @@ export default Blits.Component('NotesList', {
   props: ['onSelect', 'selectedId'],
 
   template: `
-    <Element w="$w" h="$h" alpha="1" visible="true">
+    <Element w="$w" h="$h" alpha="1" visible="true" zIndex="2">
       <!-- Panel Surface -->
       <Element w="$w" h="$h" color="$surface" />
 
@@ -68,7 +68,7 @@ export default Blits.Component('NotesList', {
     const updateds = items.map(n => {
       try { return new Date(n.updatedAt).toLocaleString() } catch { return '' }
     })
-    const rowYs = items.map((_, i) => i * 92) // static row positions (no scrolling in this simplified safe template)
+    const rowYs = items.map((_, i) => i * 92)
     const rowColors = items.map(n => (String(n.id) === selected ? primary + '12' : 'transparent'))
     const trashColors = items.map((_, i) => (this.hoverIdx === i ? error + '22' : 'transparent'))
 

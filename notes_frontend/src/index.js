@@ -16,6 +16,17 @@ import App from './App.js'
 
 console.log('[Bootstrap] Starting Minimal Notes app')
 
+// Verify mount target exists and is empty
+const mountEl = document.getElementById('app')
+if (!mountEl) {
+  console.error('[Bootstrap] #app mount element not found')
+} else {
+  // Minimal visible marker to confirm DOM is reachable before canvas mounts
+  const probe = document.createElement('div')
+  probe.style.cssText = 'position:absolute;left:2px;top:2px;width:6px;height:6px;background:#10B981;z-index:0;opacity:0.6;'
+  mountEl.appendChild(probe)
+}
+
 try {
   Blits.Launch(App, 'app', {
     w: 1920,

@@ -27,6 +27,15 @@ let _notes = [
   },
 ]
 
+// Log seed state for runtime verification
+try {
+  const seedCount = Array.isArray(_notes) ? _notes.length : 0
+  // eslint-disable-next-line no-console
+  console.log('[notesService] Initialized in-memory store', { seedCount })
+} catch {
+  // ignore
+}
+
 /**
  * Simple event system so UI can subscribe to changes in the in-memory store
  */
