@@ -9,14 +9,9 @@ export default Blits.Component('NoteEditor', {
   props: ['noteId'],
 
   template: `
-    <Element :w="$w" :h="$h">
+    <Element :w="$w" :h="$h" alpha="1" visible="true">
       <!-- Surface -->
-      <Element
-        :w="$w"
-        :h="$h"
-        :color="$surface"
-        :effects="$panelEffects"
-      />
+      <Element :w="$w" :h="$h" :color="$surface" :effects="$panelEffects" />
 
       <!-- Header controls -->
       <Element x="24" y="16" :w="$headerW" h="64">
@@ -29,7 +24,7 @@ export default Blits.Component('NoteEditor', {
         </Element>
       </Element>
 
-      <!-- Title input -->
+      <!-- Title area -->
       <Element x="24" y="96" :w="$titleW" h="64" :color="$bgColor" :effects="$inputEffects">
         <Text :content="$titleText" size="28" x="16" y="18" :color="$textColor" />
       </Element>
@@ -47,7 +42,7 @@ export default Blits.Component('NoteEditor', {
     // dimensions
     const appW = 1920
     const gap = theme.layout.gap
-    const sidebar = 560
+    const sidebar = Math.max(320, theme.layout.sidebarWidth)
     const outerPad = gap * 3
     const w = appW - (sidebar + outerPad)
     const h = 984
@@ -67,10 +62,11 @@ export default Blits.Component('NoteEditor', {
     const textColor = theme.colors.text
     const center = 0.5
 
-    // Effects: replace special helpers with plain objects for precompiler/lint compatibility
+    // Effects: plain objects for precompiler compatibility
     const panelEffects = [
       { type: 'radius', radius: theme.effects.radius },
-      { type: 'shadow',
+      {
+        type: 'shadow',
         x: theme.effects.shadow.x,
         y: theme.effects.shadow.y,
         blur: theme.effects.shadow.blur,
@@ -78,12 +74,8 @@ export default Blits.Component('NoteEditor', {
         color: theme.effects.shadow.color,
       },
     ]
-    const btnEffects = [
-      { type: 'radius', radius: theme.effects.radiusSm },
-    ]
-    const inputEffects = [
-      { type: 'radius', radius: theme.effects.radiusSm },
-    ]
+    const btnEffects = [{ type: 'radius', radius: theme.effects.radiusSm }]
+    const inputEffects = [{ type: 'radius', radius: theme.effects.radiusSm }]
 
     return {
       // geometry
@@ -96,7 +88,7 @@ export default Blits.Component('NoteEditor', {
       contentTextW,
       saveX,
 
-      // visual
+      // visuals
       surface,
       bgColor,
       primary,
@@ -113,13 +105,13 @@ export default Blits.Component('NoteEditor', {
       saving: false,
       _dirtyTimer: null,
       _unsub: null,
-      _lastNoteId: (this.noteId !== undefined && this.noteId !== null) ? this.noteId : null,
+      _lastNoteId: this.noteId !== undefined && this.noteId !== null ? this.noteId : null,
     }
   },
 
   hooks: {
     ready() {
-      // listen to store changes to reflect external updates/selection
+      // reflect external updates/selection
       this._unsub = subscribe(() => {
         if (!this.noteId) {
           this.title = ''
@@ -127,16 +119,14 @@ export default Blits.Component('NoteEditor', {
           return
         }
         if (this._lastNoteId !== this.noteId) {
-          // note changed, reload it
           const n = getNoteById(this.noteId)
           this._lastNoteId = this.noteId
           this.title = n && n.title ? n.title : ''
           this.content = n && n.content ? n.content : ''
         } else {
-          // same note, keep typing state
           const n = getNoteById(this.noteId)
-          this.title = (n && n.title) ? n.title : this.title
-          // content keep as is if user typing; store is authoritative after save
+          this.title = n && n.title ? n.title : this.title
+          // keep content as-is while typing; store authoritative after save
         }
       })
     },
@@ -190,7 +180,7 @@ export default Blits.Component('NoteEditor', {
         title: this.title,
         content: this.content,
       })
-      // simulate delay
+      // simulate a short delay
       this.$setTimeout(() => {
         this.saving = false
       }, explicit ? 200 : 50)
@@ -198,14 +188,12 @@ export default Blits.Component('NoteEditor', {
   },
 
   input: {
-    // Simple editing using arrow keys to modify content/title
-    // In a real app, you'd integrate a proper text input behavior.
+    // Simple demo editing via remote/keyboard
     up() {
-      // focus title semantics: prepend marker to indicate edit
-      this.title = this.title && this.title.endsWith(' ▮') ? this.title : (this.title + ' ▮')
+      this.title = this.title && this.title.endsWith(' ■') ? this.title : this.title + ' ■'
     },
     down() {
-      this.title = this.title ? this.title.replace(/ ▮$/, '') : ''
+      this.title = this.title ? this.title.replace(/ ■$/, '') : ''
     },
     left() {
       this.content = (this.content || '') + ' •'
@@ -213,7 +201,6 @@ export default Blits.Component('NoteEditor', {
     right() {
       if (this.content && this.content.endsWith(' •')) this.content = this.content.slice(0, -2)
     },
-    // Enter to save explicitly
     enter() {
       this.$save(true)
     },

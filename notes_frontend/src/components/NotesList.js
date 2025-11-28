@@ -16,14 +16,9 @@ export default Blits.Component('NotesList', {
   components: {},
 
   template: `
-    <Element :w="$w" :h="$h">
+    <Element :w="$w" :h="$h" alpha="1" visible="true">
       <!-- Panel Surface -->
-      <Element
-        :w="$w"
-        :h="$h"
-        :color="$surface"
-        :effects="$panelEffects"
-      />
+      <Element :w="$w" :h="$h" :color="$surface" :effects="$panelEffects" />
 
       <!-- Header -->
       <Element x="24" y="16" :w="$headerW" h="64">
@@ -83,7 +78,8 @@ export default Blits.Component('NotesList', {
     // Effects replaced with plain objects for compatibility
     const panelEffects = [
       { type: 'radius', radius: theme.effects.radius },
-      { type: 'shadow',
+      {
+        type: 'shadow',
         x: theme.effects.shadow.x,
         y: theme.effects.shadow.y,
         blur: theme.effects.shadow.blur,
@@ -91,12 +87,8 @@ export default Blits.Component('NotesList', {
         color: theme.effects.shadow.color,
       },
     ]
-    const btnEffects = [
-      { type: 'radius', radius: theme.effects.radiusSm },
-    ]
-    const rowEffects = [
-      { type: 'radius', radius: theme.effects.radiusSm },
-    ]
+    const btnEffects = [{ type: 'radius', radius: theme.effects.radiusSm }]
+    const rowEffects = [{ type: 'radius', radius: theme.effects.radiusSm }]
 
     // transitions as simple object binding
     const scrollTransition = {
@@ -104,6 +96,10 @@ export default Blits.Component('NotesList', {
       duration: theme.transition.normal,
       easing: theme.transition.easing,
     }
+
+    // initial incoming selection prop robustness
+    const incomingSelected =
+      this.selectedId !== undefined && this.selectedId !== null ? this.selectedId : null
 
     return {
       // geometry
@@ -130,8 +126,7 @@ export default Blits.Component('NotesList', {
 
       // state
       items: getNotes(),
-      // Avoid nullish coalescing to prevent parser transforming into !==
-      selectedId: (this.selectedId !== undefined && this.selectedId !== null) ? this.selectedId : null,
+      selectedId: incomingSelected,
       scrollY: 0,
       hoverIdx: -1,
       addHover: false,
@@ -148,7 +143,7 @@ export default Blits.Component('NotesList', {
       // subscribe to note updates
       this.unsub = subscribe((notes) => {
         this.items = notes
-        if (!this.selectedId && notes[0]) {
+        if ((this.selectedId === undefined || this.selectedId === null) && notes[0]) {
           this.$emitSelect(notes[0].id)
         }
       })
