@@ -14,6 +14,9 @@ export default Blits.Component('NotesHome', {
     <Element w="1920" h="1080" color="$appBg">
       <Element w="1920" h="1080" :color="$appOverlay" />
 
+      <!-- Always-visible fallback label -->
+      <Text content="NotesHome" x="24" y="8" size="18" color="#6B7280" />
+
       <Element :x="$pad" :y="$pad" :w="$contentW" :h="$headerH"
                :effects="$headerEffects"
                :color="$surface">
@@ -42,17 +45,16 @@ export default Blits.Component('NotesHome', {
 
   state() {
     const initial = getNotes()
-    const selected = (initial && initial[0] && initial[0].id) ? initial[0].id : createNote({ title: 'New note' }).id
-
-    let apiBase = ''
-    try {
-      if (typeof import !== 'undefined' && typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) {
-        apiBase = import.meta.env.VITE_API_BASE
-      }
-    } catch (e) {
-      apiBase = ''
+    let selected
+    if (initial && initial[0] && initial[0].id) {
+      selected = initial[0].id
+    } else {
+      const createdInit = createNote({ title: 'New note' })
+      selected = createdInit.id
     }
-    const label = 'API: ' + (apiBase ? apiBase : 'in-memory')
+
+    // Keep API label static to avoid any precompiler transforms that could introduce operators
+    const label = 'API: in-memory'
 
     // layout numbers precomputed
     const pad = 24
@@ -124,6 +126,13 @@ export default Blits.Component('NotesHome', {
     }
   },
 
+  // Keep logic extremely simple to avoid any operator expansion by precompiler
+  computed: {
+    $hasSelection() {
+      return this.selectedId ? true : false
+    },
+  },
+
   methods: {
     onSelect(id) {
       this.selectedId = id
@@ -133,7 +142,7 @@ export default Blits.Component('NotesHome', {
       this.selectedId = created.id
     },
     enterHover() {
-      // avoid inline ternary; assign precomputed string
+      // Use precomputed color string; no inline operations
       this.btnColor = theme.colors.primary + '22'
     },
     leaveHover() {

@@ -70,7 +70,13 @@ export default Blits.Component('NoteEditor', {
     // Effects: replace special helpers with plain objects for precompiler/lint compatibility
     const panelEffects = [
       { type: 'radius', radius: theme.effects.radius },
-      { type: 'shadow', ...theme.effects.shadow },
+      { type: 'shadow',
+        x: theme.effects.shadow.x,
+        y: theme.effects.shadow.y,
+        blur: theme.effects.shadow.blur,
+        spread: theme.effects.shadow.spread,
+        color: theme.effects.shadow.color,
+      },
     ]
     const btnEffects = [
       { type: 'radius', radius: theme.effects.radiusSm },

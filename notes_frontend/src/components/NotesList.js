@@ -84,7 +84,13 @@ export default Blits.Component('NotesList', {
     // Effects replaced with plain objects for compatibility
     const panelEffects = [
       { type: 'radius', radius: theme.effects.radius },
-      { type: 'shadow', ...theme.effects.shadow },
+      { type: 'shadow',
+        x: theme.effects.shadow.x,
+        y: theme.effects.shadow.y,
+        blur: theme.effects.shadow.blur,
+        spread: theme.effects.shadow.spread,
+        color: theme.effects.shadow.color,
+      },
     ]
     const btnEffects = [
       { type: 'radius', radius: theme.effects.radiusSm },
@@ -125,7 +131,8 @@ export default Blits.Component('NotesList', {
 
       // state
       items: getNotes(),
-      selectedId: this.selectedId ?? null,
+      // Avoid nullish coalescing to prevent parser transforming into !==
+      selectedId: (this.selectedId !== undefined && this.selectedId !== null) ? this.selectedId : null,
       scrollY: 0,
       hoverIdx: -1,
       addHover: false,
@@ -164,7 +171,9 @@ export default Blits.Component('NotesList', {
       }
     },
     $rowColor(item) {
-      return item && item.id === this.selectedId ? this.primary + '12' : 'transparent'
+      const a = item && item.id != null ? String(item.id) : ''
+      const b = this.selectedId != null ? String(this.selectedId) : ''
+      return a === b ? this.primary + '12' : 'transparent'
     },
     $itemY(i) {
       return i * 92 + this.scrollY
