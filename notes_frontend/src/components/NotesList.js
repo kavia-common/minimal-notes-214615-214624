@@ -39,7 +39,6 @@ export default Blits.Component('NotesList', {
 
       <!-- List -->
       <Element x="16" y="88" :w="$listW" :h="$listH">
-        <Element :y.transition="$scrollTransition" />
         <For each="$items" let="item" index="i">
           <Element :y="$itemY(i)" :w="$rowW" h="84"
                    :effects="$rowEffects"

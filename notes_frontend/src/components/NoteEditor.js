@@ -113,7 +113,7 @@ export default Blits.Component('NoteEditor', {
       saving: false,
       _dirtyTimer: null,
       _unsub: null,
-      _lastNoteId: this.noteId ?? null,
+      _lastNoteId: (this.noteId !== undefined && this.noteId !== null) ? this.noteId : null,
     }
   },
 

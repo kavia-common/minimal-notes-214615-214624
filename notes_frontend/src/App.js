@@ -11,7 +11,7 @@ export default Blits.Application({
       </Element>
 
       <!-- Debug background to verify routed content bounds -->
-      <Element x="24" y="112" w="1872" h="944" color="#dde7ff" alpha="0.5">
+      <Element x="24" y="112" w="1872" h="944" color="#dde7ff" alpha="0.8">
         <RouterView />
       </Element>
     </Element>
