@@ -57,7 +57,10 @@ export default Blits.Component('NotesList', {
   `,
   hooks: {
     ready() {
-      console.log('[NotesList] Ready: items', (this.items && this.items.length) || 0)
+      console.log('[NotesList] Ready', {
+        items: (this.items && this.items.length) || 0,
+        geom: { x: 0, y: 0, w: this.w, h: this.h },
+      })
       // subscribe to note updates
       this.unsub = subscribe((notes) => {
         this.items = notes

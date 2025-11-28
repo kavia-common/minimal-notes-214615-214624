@@ -11,33 +11,31 @@ export default Blits.Component('NotesHome', {
   },
 
   template: `
-    <Element w="1920" h="1080" color="$appBg" alpha="1" visible="true">
+    <Element w="1920" h="1080" color="$appBg" alpha="1" visible="true" zIndex="0">
       <!-- Header label to verify page mount -->
       <Text content="NotesHome" x="24" y="8" size="18" color="#6B7280" />
 
-      <!-- Header bar with solid border to confirm visibility -->
-      <Element x="$pad" y="$pad" w="$contentW" h="$headerH" :color="$surface" :effects="$headerEffects" alpha="1" visible="true" zIndex="5">
-        <Element x="0" y="0" :w="$contentW" :h="$headerH" color="$headerDebugBg" alpha="1" />
-        <Text content="Minimal Notes" x="$pad" y="24" size="40" :color="$textColor" />
-        <Text content="$apiLabel" x="$pad" y="64" size="20" :color="$textMuted" />
+      <!-- Fixed Header bar -->
+      <Element x="0" y="0" w="1920" h="$headerH" :color="$surface" :effects="$headerEffects" alpha="1" visible="true" zIndex="5">
+        <Element x="0" y="0" w="1920" :h="$headerH" color="$headerDebugBg" alpha="1" />
+        <Text content="Minimal Notes" x="24" y="24" size="40" :color="$textColor" />
+        <Text content="$apiLabel" x="24" y="64" size="20" :color="$textMuted" />
         <Element x="$newBtnX" y="20" w="120" h="48" :effects="$btnEffects" :color="$btnColor" @mouseenter="enterHover" @mouseleave="leaveHover" @enter="newNote">
           <Text content="+ New" size="26" align="center" x="60" y="24" :color="$primary" />
         </Element>
       </Element>
 
-      <!-- Two-pane Content Area -->
-      <Element x="$pad" y="$contentY" w="$contentW" h="$contentH" alpha="1" visible="true" zIndex="1">
-        <!-- LEFT: Notes List (fixed width), with debug background -->
-        <Element x="0" y="0" w="$sidebarW" h="$contentH" :color="$leftBg" alpha="1" visible="true" zIndex="2">
-          <Element x="0" y="0" :w="$sidebarW" :h="$contentH" color="$leftDebugBg" alpha="1" />
-          <NotesList selectedId="$selectedId" onSelect="onSelect" w="$sidebarW" h="$contentH" />
-        </Element>
+      <!-- Two-pane Content Area with explicit static geometry -->
+      <!-- LEFT: Notes List -->
+      <Element x="0" y="64" w="320" h="$contentH" :color="$leftBg" alpha="1" visible="true" zIndex="6">
+        <Element x="0" y="0" w="320" :h="$contentH" color="$leftDebugBg" alpha="1" />
+        <NotesList selectedId="$selectedId" onSelect="onSelect" w="320" h="$contentH" />
+      </Element>
 
-        <!-- RIGHT: Editor fills remaining width, with debug background -->
-        <Element x="$rightX" y="0" w="$rightW" h="$contentH" :color="$rightBg" alpha="1" visible="true" zIndex="1">
-          <Element x="0" y="0" :w="$rightW" :h="$contentH" color="$rightDebugBg" alpha="1" />
-          <NoteEditor noteId="$selectedId" w="$rightW" h="$contentH" />
-        </Element>
+      <!-- RIGHT: Note Editor -->
+      <Element x="320" y="64" w="$rightW" h="$contentH" :color="$rightBg" alpha="1" visible="true" zIndex="6">
+        <Element x="0" y="0" :w="$rightW" :h="$contentH" color="$rightDebugBg" alpha="1" />
+        <NoteEditor noteId="$selectedId" w="$rightW" h="$contentH" />
       </Element>
     </Element>
   `,
@@ -57,19 +55,18 @@ export default Blits.Component('NotesHome', {
     const apiLabel = 'API: in-memory'
 
     // Layout: explicit static sizes to avoid runtime arithmetic in template
-    const pad = 24
     const fullW = 1920
     const fullH = 1080
-    const headerH = theme.layout.headerHeight
-    const sidebarW = Math.max(320, theme.layout.sidebarWidth)
+    const headerH = 64 // instruction requires y=64 for content start
+    const sidebarW = 320
+    const contentY = 64
+    const contentH = fullH - contentY
+    const rightX = 320
+    const rightW = fullW - rightX
+    const newBtnX = fullW - 24 - 120
+    const pad = 24
     const gap = theme.layout.gap
-
     const contentW = fullW - (pad * 2)
-    const contentY = pad + headerH + gap
-    const contentH = fullH - contentY - pad
-    const rightX = sidebarW + gap
-    const rightW = contentW - sidebarW - gap
-    const newBtnX = contentW - 140
 
     // Visuals
     const appBg = theme.colors.background
@@ -149,8 +146,11 @@ export default Blits.Component('NotesHome', {
     ready() {
       console.log('[NotesHome] Ready: mounted and panes should be visible', {
         selectedId: this.selectedId,
-        sidebarW: this.sidebarW,
-        rightW: this.rightW,
+        geom: {
+          list: { x: 0, y: 64, w: 320, h: this.contentH },
+          editor: { x: 320, y: 64, w: this.rightW, h: this.contentH },
+        },
+        z: { header: 5, panes: 6 },
       })
     },
   },

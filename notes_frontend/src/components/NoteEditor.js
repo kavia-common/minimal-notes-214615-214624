@@ -111,6 +111,10 @@ export default Blits.Component('NoteEditor', {
 
   hooks: {
     ready() {
+      console.log('[NoteEditor] Ready', {
+        noteId: this.noteId || null,
+        geom: { x: 0, y: 0, w: this.w, h: this.h },
+      })
       // reflect external updates/selection
       this._unsub = subscribe(() => {
         if (!this.noteId) {
