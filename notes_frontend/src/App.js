@@ -16,8 +16,7 @@ export default Blits.Application({
 
       <!-- Direct content area rendering NotesHome with fixed bounds -->
       <Element x="0" y="64" w="1920" h="1016" color="#dde7ff" alpha="0.0" visible="true" zIndex="2">
-        <!-- Small debug pixel to confirm content layer visibility -->
-        <Element x="6" y="6" w="6" h="6" color="#10B981" alpha="1" visible="true" zIndex="3" />
+
         <NotesHome w="1920" h="1016" />
       </Element>
     </Element>

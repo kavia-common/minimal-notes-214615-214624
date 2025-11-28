@@ -12,8 +12,7 @@ export default Blits.Component('NotesHome', {
       <!-- Fixed Header bar (zIndex above content but separate in App) -->
       <Element x="0" y="-64" w="1920" h="$headerH" color="$surface" alpha="0" visible="false" zIndex="6"></Element>
 
-      <!-- Guaranteed visible test block to confirm child region renders -->
-      <Element x="8" y="8" w="8" h="8" color="#10B981" alpha="1" visible="true" zIndex="1"></Element>
+
 
       <!-- LEFT: Notes List -->
       <Element x="0" y="0" w="320" h="$contentH" color="$leftBg" alpha="1" visible="true" zIndex="2">
