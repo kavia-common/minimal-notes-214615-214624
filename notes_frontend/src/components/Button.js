@@ -3,19 +3,19 @@ import Blits from '@lightningjs/blits'
 export default Blits.Component('Button', {
   template: `
       <Element>
-          <Text :content="$isFavorited ? $unfavoriteText : $favoriteText"></Text>
+          <Text content="$label"></Text>
       </Element>
     `,
   state() {
     return {
-      isFavorited: false,
-      favoriteText: 'Press Enter',
-      unfavoriteText: 'Press Enter Again',
+      label: 'Press Enter',
+      _toggle: false,
     }
   },
   input: {
     enter() {
-      this.isFavorited = !this.isFavorited
+      this._toggle = !this._toggle
+      this.label = this._toggle ? 'Press Enter Again' : 'Press Enter'
     },
   },
 })

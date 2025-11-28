@@ -12,51 +12,51 @@ export default Blits.Component('NotesHome', {
 
   template: `
     <Element w="1920" h="1080" color="$appBg">
+      <!-- simple static overlay color binding -->
       <Element w="1920" h="1080" :color="$appOverlay" />
 
-      <!-- Always-visible fallback label -->
+      <!-- Visible header ensures UI is never blank -->
       <Text content="NotesHome" x="24" y="8" size="18" color="#6B7280" />
 
-      <Element :x="$pad" :y="$pad" :w="$contentW" :h="$headerH"
-               :effects="$headerEffects"
-               :color="$surface">
-        <Text content="Minimal Notes" :x="$pad" y="24" size="40" :color="$textColor" />
-        <Text :content="$apiLabel" :x="$pad" y="64" size="20" :color="$textMuted" />
-        <Element :x="$newBtnX" y="20" w="120" h="48"
-                 :effects="$btnEffects"
-                 :color="$btnColor"
-                 @mouseenter="enterHover" @mouseleave="leaveHover"
-                 @enter="newNote">
+      <!-- Header bar -->
+      <Element x="$pad" y="$pad" w="$contentW" h="$headerH" :color="$surface" :effects="$headerEffects">
+        <Text content="Minimal Notes" x="$pad" y="24" size="40" :color="$textColor" />
+        <Text content="$apiLabel" x="$pad" y="64" size="20" :color="$textMuted" />
+        <Element x="$newBtnX" y="20" w="120" h="48" :effects="$btnEffects" :color="$btnColor" @mouseenter="enterHover" @mouseleave="leaveHover" @enter="newNote">
           <Text content="+ New" size="26" align="center" x="60" y="24" :color="$primary" />
         </Element>
       </Element>
 
-      <Element :x="$pad" :y="$contentY" :w="$contentW" :h="$contentH">
-        <Element :w="$sidebarW" :h="$contentH">
-          <NotesList :selectedId="$selectedId" :onSelect="onSelect" :w="$sidebarW" :h="$contentH" />
+      <!-- Content area -->
+      <Element x="$pad" y="$contentY" w="$contentW" h="$contentH">
+        <!-- Sidebar -->
+        <Element w="$sidebarW" h="$contentH">
+          <NotesList selectedId="$selectedId" onSelect="onSelect" w="$sidebarW" h="$contentH" />
         </Element>
 
-        <Element :x="$rightX" :w="$rightW" :h="$contentH">
-          <NoteEditor :noteId="$selectedId" :w="$rightW" :h="$contentH" />
+        <!-- Editor -->
+        <Element x="$rightX" w="$rightW" h="$contentH">
+          <NoteEditor noteId="$selectedId" w="$rightW" h="$contentH" />
         </Element>
       </Element>
     </Element>
   `,
 
   state() {
+    // Seed and select
     const initial = getNotes()
-    let selected
-    if (initial && initial[0] && initial[0].id) {
+    let selected = null
+    if (initial && initial.length && initial[0].id) {
       selected = initial[0].id
     } else {
-      const createdInit = createNote({ title: 'New note' })
-      selected = createdInit.id
+      const created = createNote({ title: 'New note' })
+      selected = created.id
     }
 
-    // Keep API label static to avoid any precompiler transforms that could introduce operators
-    const label = 'API: in-memory'
+    // labels
+    const apiLabel = 'API: in-memory'
 
-    // layout numbers precomputed
+    // layout numbers precomputed (avoid arithmetic in template)
     const pad = 24
     const fullW = 1920
     const fullH = 1080
@@ -64,14 +64,14 @@ export default Blits.Component('NotesHome', {
     const sidebarW = theme.layout.sidebarWidth
     const gap = theme.layout.gap
 
-    const contentW = fullW - pad * 2
+    const contentW = fullW - pad - pad
     const contentY = pad + headerH + gap
-    const contentH = fullH - (contentY + pad)
+    const contentH = fullH - contentY - pad
     const rightX = sidebarW + gap
-    const rightW = contentW - (sidebarW + gap)
+    const rightW = contentW - sidebarW - gap
     const newBtnX = contentW - 140
 
-    // colors/effects precomputed (no inline objects/functions in template)
+    // colors/effects precomputed
     const appBg = theme.colors.background
     const appOverlay = theme.colors.overlay
     const surface = theme.colors.surface
@@ -79,11 +79,11 @@ export default Blits.Component('NotesHome', {
     const textMuted = theme.colors.textMuted
     const primary = theme.colors.primary
 
-    // Effects: use plain objects (no special helpers) to satisfy precompiler/linting
-    // Build effect objects explicitly to avoid spread syntax issues in precompiler
+    // effects as plain objects/arrays to satisfy precompiler
     const headerEffects = [
       { type: 'radius', radius: theme.effects.radiusLg },
-      { type: 'shadow',
+      {
+        type: 'shadow',
         x: theme.effects.shadowSm.x,
         y: theme.effects.shadowSm.y,
         blur: theme.effects.shadowSm.blur,
@@ -91,12 +91,10 @@ export default Blits.Component('NotesHome', {
         color: theme.effects.shadowSm.color,
       },
     ]
-    const btnEffects = [
-      { type: 'radius', radius: theme.effects.radiusSm },
-    ]
+    const btnEffects = [{ type: 'radius', radius: theme.effects.radiusSm }]
 
     return {
-      // theme parts used in simple bindings
+      // visuals
       appBg,
       appOverlay,
       surface,
@@ -104,9 +102,11 @@ export default Blits.Component('NotesHome', {
       textMuted,
       primary,
 
-      // ids and labels
+      // labels
+      apiLabel,
+
+      // selection
       selectedId: selected,
-      apiLabel: label,
 
       // layout
       pad,
@@ -119,20 +119,16 @@ export default Blits.Component('NotesHome', {
       rightW,
       newBtnX,
 
-      // effects and interactive color
+      // effects
       headerEffects,
       btnEffects,
+
+      // interactive
       btnColor: 'transparent',
     }
   },
 
-  // Keep logic extremely simple to avoid any operator expansion by precompiler
-  computed: {
-    $hasSelection() {
-      return this.selectedId ? true : false
-    },
-  },
-
+  // keep minimal logic
   methods: {
     onSelect(id) {
       this.selectedId = id
@@ -142,7 +138,6 @@ export default Blits.Component('NotesHome', {
       this.selectedId = created.id
     },
     enterHover() {
-      // Use precomputed color string; no inline operations
       this.btnColor = theme.colors.primary + '22'
     },
     leaveHover() {

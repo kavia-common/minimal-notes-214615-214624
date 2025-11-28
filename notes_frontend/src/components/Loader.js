@@ -3,36 +3,31 @@ import Blits from '@lightningjs/blits'
 export default Blits.Component('Loader', {
   template: `
     <Element>
-      <Circle size="40" :color="$loaderColor || '#94a3b8'" :alpha.transition="{value: $alpha, delay: 200}" />
-      <Circle size="40" :color="$loaderColor || '#94a3b8'" x="60" :alpha.transition="{value: $alpha, delay: 300}" />
-      <Circle size="40" :color="$loaderColor || '#94a3b8'" x="120" :alpha.transition="{value: $alpha, delay: 400}" />
+      <Circle size="40" :color="$color1" :alpha="$alpha1" />
+      <Circle size="40" :color="$color2" x="60" :alpha="$alpha2" />
+      <Circle size="40" :color="$color3" x="120" :alpha="$alpha3" />
     </Element>
     `,
-  /**
-   * @type {['loaderColor']}
-   */
   props: ['loaderColor'],
   state() {
+    const base = this.loaderColor ? this.loaderColor : '#94a3b8'
     return {
-      /**
-       * Alpha of the circles, used to create a fade-in / fade-out transition
-       */
-      alpha: 0,
+      color1: base,
+      color2: base,
+      color3: base,
+      alpha1: 1,
+      alpha2: 0.8,
+      alpha3: 0.6,
     }
   },
   hooks: {
     ready() {
-      this.start()
-    },
-  },
-  methods: {
-    /**
-     * Starts the loading transition in an interval
-     * @returns {void}
-     */
-    start() {
       this.$setInterval(() => {
-        this.alpha = this.alpha === 1 ? 0 : 1
+        // simple cyclic alpha without transition objects
+        const a1 = this.alpha1
+        this.alpha1 = this.alpha2
+        this.alpha2 = this.alpha3
+        this.alpha3 = a1
       }, 800)
     },
   },
